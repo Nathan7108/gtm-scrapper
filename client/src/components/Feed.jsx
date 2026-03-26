@@ -10,15 +10,22 @@ export default function Feed() {
   const [category, setCategory] = useState('All')
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     fetch('/api/posts')
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`Server returned ${r.status}`)
+        return r.json()
+      })
       .then((data) => {
         setPosts(data)
         setLoading(false)
       })
-      .catch(() => setLoading(false))
+      .catch((err) => {
+        setError(err.message)
+        setLoading(false)
+      })
   }, [])
 
   const hasActiveFilters = tier !== 'All' || category !== 'All' || search.trim()
@@ -59,51 +66,63 @@ export default function Feed() {
   const highCount = scored.filter((p) => p.score >= 85).length
   const midCount = scored.filter((p) => p.score >= 65 && p.score < 85).length
 
+  if (error) {
+    return (
+      <div className="empty-state">
+        <h2 className="empty-state__title">Failed to load posts</h2>
+        <p className="empty-state__text">{error}</p>
+      </div>
+    )
+  }
+
   return (
     <>
-      <div className="feed-summary">
+      <div className="feed-summary" aria-label="Post statistics">
         <span><span className="feed-summary__number">{posts.length}</span> posts</span>
-        <span className="feed-summary__sep">/</span>
+        <span className="feed-summary__sep" aria-hidden="true">/</span>
         <span><span className="feed-summary__number">{scored.length}</span> scored</span>
         {highCount > 0 && (
           <>
-            <span className="feed-summary__sep">/</span>
+            <span className="feed-summary__sep" aria-hidden="true">/</span>
             <span className="feed-summary__high"><span className="feed-summary__number">{highCount}</span> high</span>
           </>
         )}
         {midCount > 0 && (
           <>
-            <span className="feed-summary__sep">/</span>
+            <span className="feed-summary__sep" aria-hidden="true">/</span>
             <span className="feed-summary__mid"><span className="feed-summary__number">{midCount}</span> mid</span>
           </>
         )}
       </div>
 
-      <div className="filters">
+      <div className="filters" role="search" aria-label="Filter posts">
         <input
           type="text"
           className="search-input"
           placeholder="Search..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          aria-label="Search posts"
         />
-        <div className="filter-sep" />
-        <div className="filter-group">
+        <div className="filter-sep" aria-hidden="true" />
+        <div className="filter-group" role="group" aria-label="Filter by tier">
           {TIERS.map((t) => (
             <button
               key={t}
               className={`filter-btn ${tier === t ? 'filter-btn--active' : ''}`}
               onClick={() => setTier(t)}
+              aria-pressed={tier === t}
             >
               {t}
             </button>
           ))}
         </div>
-        <div className="filter-sep" />
+        <div className="filter-sep" aria-hidden="true" />
         <select
           className="category-select"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
+          aria-label="Filter by category"
         >
           {CATEGORIES.map((c) => (
             <option key={c} value={c}>{c === 'All' ? 'All categories' : c}</option>
@@ -115,28 +134,28 @@ export default function Feed() {
       </div>
 
       {loading ? (
-        <div className="empty-state">
-          <div className="empty-state__title">Loading...</div>
+        <div className="empty-state" role="status">
+          <h2 className="empty-state__title">Loading...</h2>
         </div>
       ) : filtered.length === 0 ? (
         <div className="empty-state">
           {posts.length === 0 ? (
             <>
-              <div className="empty-state__title">No posts yet</div>
-              <div className="empty-state__text">Get started in three steps</div>
+              <h2 className="empty-state__title">No posts yet</h2>
+              <p className="empty-state__text">Get started in three steps</p>
               <div className="empty-state__steps">
                 <div className="empty-step">
-                  <div className="empty-step__num">1</div>
+                  <div className="empty-step__num" aria-hidden="true">1</div>
                   <div className="empty-step__label">Scrape</div>
                   <div className="empty-step__desc">Pull tweets from tracked accounts</div>
                 </div>
                 <div className="empty-step">
-                  <div className="empty-step__num">2</div>
+                  <div className="empty-step__num" aria-hidden="true">2</div>
                   <div className="empty-step__label">Score</div>
                   <div className="empty-step__desc">Rank posts by GTM relevance</div>
                 </div>
                 <div className="empty-step">
-                  <div className="empty-step__num">3</div>
+                  <div className="empty-step__num" aria-hidden="true">3</div>
                   <div className="empty-step__label">Browse</div>
                   <div className="empty-step__desc">Filter and find what matters</div>
                 </div>
@@ -144,10 +163,10 @@ export default function Feed() {
             </>
           ) : (
             <>
-              <div className="empty-state__title">No matches</div>
-              <div className="empty-state__text">
+              <h2 className="empty-state__title">No matches</h2>
+              <p className="empty-state__text">
                 Try different filters or <button className="filter-clear" onClick={clearFilters}>clear all</button>
-              </div>
+              </p>
             </>
           )}
         </div>

@@ -9,21 +9,32 @@ export default function AccountsPanel() {
   const [category, setCategory] = useState('GTM')
   const [saving, setSaving] = useState(false)
   const [removing, setRemoving] = useState(null)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     fetch('/api/accounts')
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`Server returned ${r.status}`)
+        return r.json()
+      })
       .then(setAccounts)
+      .catch((err) => setError(err.message))
   }, [])
 
   async function saveAccounts(updated) {
     setSaving(true)
-    await fetch('/api/accounts', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updated),
-    })
-    setAccounts(updated)
+    try {
+      const res = await fetch('/api/accounts', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated),
+      })
+      if (!res.ok) throw new Error(`Save failed (${res.status})`)
+      setAccounts(updated)
+      setError(null)
+    } catch (err) {
+      setError(err.message)
+    }
     setSaving(false)
     setRemoving(null)
   }
@@ -46,6 +57,15 @@ export default function AccountsPanel() {
     }
   }
 
+  if (error && accounts.length === 0) {
+    return (
+      <div className="empty-state">
+        <h2 className="empty-state__title">Failed to load accounts</h2>
+        <p className="empty-state__text">{error}</p>
+      </div>
+    )
+  }
+
   return (
     <div className="panel">
       <form className="panel__form" onSubmit={addAccount}>
@@ -54,6 +74,7 @@ export default function AccountsPanel() {
           placeholder="@handle"
           value={handle}
           onChange={(e) => setHandle(e.target.value)}
+          aria-label="Twitter handle"
           required
         />
         <input
@@ -61,12 +82,14 @@ export default function AccountsPanel() {
           placeholder="Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          aria-label="Display name"
           required
         />
         <select
           className="category-select"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
+          aria-label="Category"
         >
           {CATEGORIES.map((c) => (
             <option key={c} value={c}>{c}</option>
@@ -76,6 +99,12 @@ export default function AccountsPanel() {
           Add
         </button>
       </form>
+
+      {error && accounts.length > 0 && (
+        <div className="toast toast--error" style={{ marginBottom: 'var(--space-md)' }}>
+          {error}
+        </div>
+      )}
 
       <div className="panel__list">
         {accounts.map((account) => (

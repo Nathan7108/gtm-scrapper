@@ -26,6 +26,7 @@ export default function App() {
 
   return (
     <div className="app">
+      <a href="#main-content" className="skip-nav">Skip to content</a>
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
       <main className={`main ${collapsed ? 'main--expanded' : ''}`}>
         <Routes>
@@ -99,8 +100,8 @@ function PageLayout({ page, children, onRefresh }) {
     <>
       <header className="main__header">
         <div>
-          <div className="main__title">{current.title}</div>
-          <div className="main__subtitle">{current.subtitle}</div>
+          <h1 className="main__title">{current.title}</h1>
+          <p className="main__subtitle">{current.subtitle}</p>
         </div>
         {page === '/' && (
           <div style={{ display: 'flex', gap: '6px' }}>
@@ -121,7 +122,7 @@ function PageLayout({ page, children, onRefresh }) {
           </div>
         </div>
       )}
-      <div className="main__content">
+      <div className="main__content" id="main-content">
         {children}
       </div>
     </>
@@ -131,8 +132,8 @@ function PageLayout({ page, children, onRefresh }) {
 function PlaceholderPage() {
   return (
     <div className="empty-state">
-      <div className="empty-state__title">Settings</div>
-      <div className="empty-state__text">Configuration options coming soon.</div>
+      <h2 className="empty-state__title">Settings</h2>
+      <p className="empty-state__text">Configuration options coming soon.</p>
     </div>
   )
 }

@@ -5,21 +5,32 @@ export default function TopicsPanel() {
   const [newTopic, setNewTopic] = useState('')
   const [saving, setSaving] = useState(false)
   const [removing, setRemoving] = useState(null)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     fetch('/api/topics')
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`Server returned ${r.status}`)
+        return r.json()
+      })
       .then(setTopics)
+      .catch((err) => setError(err.message))
   }, [])
 
   async function saveTopics(updated) {
     setSaving(true)
-    await fetch('/api/topics', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updated),
-    })
-    setTopics(updated)
+    try {
+      const res = await fetch('/api/topics', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated),
+      })
+      if (!res.ok) throw new Error(`Save failed (${res.status})`)
+      setTopics(updated)
+      setError(null)
+    } catch (err) {
+      setError(err.message)
+    }
     setSaving(false)
     setRemoving(null)
   }
@@ -41,6 +52,15 @@ export default function TopicsPanel() {
     }
   }
 
+  if (error && topics.length === 0) {
+    return (
+      <div className="empty-state">
+        <h2 className="empty-state__title">Failed to load topics</h2>
+        <p className="empty-state__text">{error}</p>
+      </div>
+    )
+  }
+
   return (
     <div className="panel">
       <form className="panel__form" onSubmit={addTopic}>
@@ -49,6 +69,7 @@ export default function TopicsPanel() {
           placeholder="Add keyword or phrase..."
           value={newTopic}
           onChange={(e) => setNewTopic(e.target.value)}
+          aria-label="Topic keyword"
           style={{ flex: 1 }}
           required
         />
@@ -56,6 +77,12 @@ export default function TopicsPanel() {
           Add
         </button>
       </form>
+
+      {error && topics.length > 0 && (
+        <div className="toast toast--error" style={{ marginBottom: 'var(--space-md)' }}>
+          {error}
+        </div>
+      )}
 
       <div className="panel__list">
         {topics.map((topic) => (
