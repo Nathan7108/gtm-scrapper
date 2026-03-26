@@ -4,6 +4,9 @@ const fs = require('fs')
 const path = require('path')
 require('dotenv').config()
 
+const { runScrape } = require('./scraper')
+const { runScore } = require('./scorer')
+
 const app = express()
 const PORT = process.env.PORT || 3001
 
@@ -46,14 +49,48 @@ app.put('/api/topics', (req, res) => {
   res.json({ ok: true })
 })
 
-// Placeholder scrape endpoint (Issue 3)
-app.post('/api/scrape', (req, res) => {
-  res.json({ status: 'not_implemented', message: 'Apify scraper coming in Issue 3' })
+// Scrape endpoint (Issue 3)
+let scrapeInProgress = false
+
+app.post('/api/scrape', async (req, res) => {
+  if (scrapeInProgress) {
+    return res.status(409).json({ status: 'busy', message: 'A scrape is already in progress' })
+  }
+
+  const { accounts = true, topics = true, maxTweetsPerSource = 20 } = req.body || {}
+
+  scrapeInProgress = true
+  try {
+    const result = await runScrape({ accounts, topics, maxTweetsPerSource })
+    res.json(result)
+  } catch (err) {
+    console.error('[Server] Scrape failed:', err.message)
+    res.status(500).json({ status: 'error', message: err.message })
+  } finally {
+    scrapeInProgress = false
+  }
 })
 
-// Placeholder score endpoint (Issue 4)
-app.post('/api/score', (req, res) => {
-  res.json({ status: 'not_implemented', message: 'LLM scoring coming in Issue 4' })
+// Score endpoint (Issue 4)
+let scoreInProgress = false
+
+app.post('/api/score', async (req, res) => {
+  if (scoreInProgress) {
+    return res.status(409).json({ status: 'busy', message: 'Scoring is already in progress' })
+  }
+
+  const { batchSize = 10 } = req.body || {}
+
+  scoreInProgress = true
+  try {
+    const result = await runScore({ batchSize })
+    res.json(result)
+  } catch (err) {
+    console.error('[Server] Score failed:', err.message)
+    res.status(500).json({ status: 'error', message: err.message })
+  } finally {
+    scoreInProgress = false
+  }
 })
 
 app.get('/api/health', (req, res) => {
