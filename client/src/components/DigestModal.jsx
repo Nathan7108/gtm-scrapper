@@ -56,15 +56,14 @@ export default function DigestPage() {
           <span>Top posts to include:</span>
           <input
             type="number"
-            className="search-input"
+            className="search-input w-number"
             value={topN}
             onChange={(e) => setTopN(Math.max(1, parseInt(e.target.value) || 1))}
             min={1}
             max={20}
-            style={{ width: 80 }}
           />
         </label>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div className="flex-row">
           <button className="btn btn--ghost" onClick={handlePreview} disabled={loading}>
             {loading ? 'Loading...' : 'Preview'}
           </button>

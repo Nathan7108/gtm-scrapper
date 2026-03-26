@@ -65,12 +65,11 @@ export default function TopicsPanel() {
     <div className="panel">
       <form className="panel__form" onSubmit={addTopic}>
         <input
-          className="search-input"
+          className="search-input flex-1"
           placeholder="Add keyword or phrase..."
           value={newTopic}
           onChange={(e) => setNewTopic(e.target.value)}
           aria-label="Topic keyword"
-          style={{ flex: 1 }}
           required
         />
         <button className="btn btn--primary" type="submit" disabled={saving}>
@@ -79,7 +78,7 @@ export default function TopicsPanel() {
       </form>
 
       {error && topics.length > 0 && (
-        <div className="toast toast--error" style={{ marginBottom: 'var(--space-md)' }}>
+        <div className="toast toast--error toast--inline">
           {error}
         </div>
       )}

@@ -101,7 +101,7 @@ export default function AccountsPanel() {
       </form>
 
       {error && accounts.length > 0 && (
-        <div className="toast toast--error" style={{ marginBottom: 'var(--space-md)' }}>
+        <div className="toast toast--error toast--inline">
           {error}
         </div>
       )}

@@ -104,7 +104,7 @@ function PageLayout({ page, children, onRefresh }) {
           <p className="main__subtitle">{current.subtitle}</p>
         </div>
         {page === '/' && (
-          <div style={{ display: 'flex', gap: '6px' }}>
+          <div className="flex-row">
             <button className="btn btn--ghost" onClick={handleScrape} disabled={scraping}>
               {scraping ? 'Scraping...' : 'Scrape'}
             </button>

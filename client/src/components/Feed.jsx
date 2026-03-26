@@ -42,7 +42,6 @@ export default function Feed() {
     if (tier === 'High') result = result.filter((p) => p.score >= 85)
     else if (tier === 'Mid') result = result.filter((p) => p.score >= 65 && p.score < 85)
     else if (tier === 'Low') result = result.filter((p) => p.score != null && p.score < 65)
-    else result = result.filter((p) => p.score != null)
 
     if (category !== 'All') {
       result = result.filter((p) => p.category === category)
