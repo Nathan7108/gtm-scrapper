@@ -67,8 +67,10 @@ async function scrapeByAccount(scraper, handle, maxTweets) {
     if (tweet.text) tweets.push(tweet)
   }
 
-  console.log(`[Scraper] Got ${tweets.length} tweets from @${handle}`)
-  return tweets.map(t => normalizeTweet(t, 'account', handle))
+  const normalized = tweets.map(t => normalizeTweet(t, 'account', handle))
+  const filtered = normalized.filter(isWorthKeeping)
+  console.log(`[Scraper] Got ${tweets.length} tweets from @${handle}, ${filtered.length} passed quality filter`)
+  return filtered
 }
 
 async function scrapeByTopic(scraper, keyword, maxTweets) {
@@ -88,8 +90,46 @@ async function scrapeByTopic(scraper, keyword, maxTweets) {
     if (tweet.text) tweets.push(tweet)
   }
 
-  console.log(`[Scraper] Got ${tweets.length} tweets for "${keyword}"`)
-  return tweets.map(t => normalizeTweet(t, 'topic', keyword))
+  const normalized = tweets.map(t => normalizeTweet(t, 'topic', keyword))
+  const filtered = normalized.filter(isWorthKeeping)
+  console.log(`[Scraper] Got ${tweets.length} tweets for "${keyword}", ${filtered.length} passed quality filter`)
+  return filtered
+}
+
+// Drop low-value posts: too short, pure self-promo, motivational fluff, personal rants
+function isWorthKeeping(post) {
+  const text = (post.text || '').toLowerCase()
+  const wordCount = text.split(/\s+/).length
+
+  // Too short to be useful (under 15 words and no link)
+  if (wordCount < 15 && !text.includes('http')) return false
+
+  // Pure retweet with no commentary
+  if (text.startsWith('rt @')) return false
+
+  // Motivational one-liners with no substance
+  const fluffPatterns = [
+    /^(just|remember|never|always|stop|start|the secret|the key|pro tip|hot take)[:\s]/,
+    /pay your rent/,
+    /most people won't/,
+    /here'?s the thing/,
+    /unpopular opinion/,
+    /this is the way/,
+    /let that sink in/,
+    /read that again/,
+    /thread 🧵/,
+  ]
+  if (fluffPatterns.some(p => p.test(text)) && wordCount < 30) return false
+
+  // Purely personal (no GTM/tech/business signal)
+  const personalPatterns = [
+    /^(good morning|happy birthday|rip |prayers|congrats to my)/,
+    /^(heading to|just landed|at the airport|on my way)/,
+    /^(my wife|my kid|my dog|my cat|my family)/,
+  ]
+  if (personalPatterns.some(p => p.test(text))) return false
+
+  return true
 }
 
 function deduplicatePosts(existing, newPosts) {
