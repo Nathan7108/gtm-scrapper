@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 export default function TopicsPanel() {
   const [topics, setTopics] = useState([])
@@ -6,16 +6,26 @@ export default function TopicsPanel() {
   const [saving, setSaving] = useState(false)
   const [removing, setRemoving] = useState(null)
   const [error, setError] = useState(null)
+  const [notice, setNotice] = useState(null)
 
-  useEffect(() => {
+  const fetchTopics = useCallback(() => {
+    setError(null)
     fetch('/api/topics')
       .then((r) => {
         if (!r.ok) throw new Error(`Server returned ${r.status}`)
         return r.json()
       })
-      .then(setTopics)
+      .then((data) => setTopics(Array.isArray(data) ? data : []))
       .catch((err) => setError(err.message))
   }, [])
+
+  useEffect(() => { fetchTopics() }, [fetchTopics])
+
+  useEffect(() => {
+    if (!notice) return
+    const t = setTimeout(() => setNotice(null), 3000)
+    return () => clearTimeout(t)
+  }, [notice])
 
   async function saveTopics(updated) {
     setSaving(true)
@@ -39,7 +49,10 @@ export default function TopicsPanel() {
     e.preventDefault()
     if (!newTopic.trim()) return
     const keyword = newTopic.trim()
-    if (topics.includes(keyword)) return
+    if (topics.some((t) => t.toLowerCase() === keyword.toLowerCase())) {
+      setNotice(`"${keyword}" is already tracked`)
+      return
+    }
     saveTopics([...topics, keyword])
     setNewTopic('')
   }
@@ -57,6 +70,9 @@ export default function TopicsPanel() {
       <div className="empty-state">
         <h2 className="empty-state__title">Failed to load topics</h2>
         <p className="empty-state__text">{error}</p>
+        <button className="btn btn--ghost" onClick={fetchTopics} style={{ marginTop: 16 }}>
+          Try again
+        </button>
       </div>
     )
   }
@@ -70,6 +86,7 @@ export default function TopicsPanel() {
           value={newTopic}
           onChange={(e) => setNewTopic(e.target.value)}
           aria-label="Topic keyword"
+          maxLength={100}
           required
         />
         <button className="btn btn--primary" type="submit" disabled={saving}>
@@ -77,13 +94,20 @@ export default function TopicsPanel() {
         </button>
       </form>
 
+      {notice && (
+        <div className="toast toast--info toast--inline">{notice}</div>
+      )}
+
       {error && topics.length > 0 && (
-        <div className="toast toast--error toast--inline">
-          {error}
-        </div>
+        <div className="toast toast--error toast--inline">{error}</div>
       )}
 
       <div className="panel__list">
+        {topics.length === 0 && !error && (
+          <div className="empty-state">
+            <p className="empty-state__text">No topics tracked yet. Add one above.</p>
+          </div>
+        )}
         {topics.map((topic) => (
           <div key={topic} className="panel__item">
             <div className="panel__item-info">

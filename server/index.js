@@ -20,7 +20,12 @@ const dataDir = path.join(__dirname, '..', 'data')
 function readJSON(file) {
   const filePath = path.join(dataDir, file)
   if (!fs.existsSync(filePath)) return []
-  return JSON.parse(fs.readFileSync(filePath, 'utf-8'))
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8'))
+  } catch {
+    console.error(`[Server] Failed to parse ${file}, returning empty array`)
+    return []
+  }
 }
 
 function writeJSON(file, data) {
@@ -38,6 +43,13 @@ app.get('/api/accounts', (req, res) => {
 })
 
 app.put('/api/accounts', (req, res) => {
+  if (!Array.isArray(req.body)) {
+    return res.status(400).json({ status: 'error', message: 'Expected an array of accounts' })
+  }
+  const valid = req.body.every(a => a && typeof a.handle === 'string' && typeof a.name === 'string')
+  if (!valid) {
+    return res.status(400).json({ status: 'error', message: 'Each account needs handle and name' })
+  }
   writeJSON('accounts.json', req.body)
   res.json({ ok: true })
 })
@@ -47,6 +59,9 @@ app.get('/api/topics', (req, res) => {
 })
 
 app.put('/api/topics', (req, res) => {
+  if (!Array.isArray(req.body) || !req.body.every(t => typeof t === 'string')) {
+    return res.status(400).json({ status: 'error', message: 'Expected an array of strings' })
+  }
   writeJSON('topics.json', req.body)
   res.json({ ok: true })
 })

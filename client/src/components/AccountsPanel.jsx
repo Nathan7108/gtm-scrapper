@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 const CATEGORIES = ['GTM', 'SaaS', 'Sales', 'PLG', 'Growth', 'AI', 'Startup']
 
@@ -10,16 +10,26 @@ export default function AccountsPanel() {
   const [saving, setSaving] = useState(false)
   const [removing, setRemoving] = useState(null)
   const [error, setError] = useState(null)
+  const [notice, setNotice] = useState(null)
 
-  useEffect(() => {
+  const fetchAccounts = useCallback(() => {
+    setError(null)
     fetch('/api/accounts')
       .then((r) => {
         if (!r.ok) throw new Error(`Server returned ${r.status}`)
         return r.json()
       })
-      .then(setAccounts)
+      .then((data) => setAccounts(Array.isArray(data) ? data : []))
       .catch((err) => setError(err.message))
   }, [])
+
+  useEffect(() => { fetchAccounts() }, [fetchAccounts])
+
+  useEffect(() => {
+    if (!notice) return
+    const t = setTimeout(() => setNotice(null), 3000)
+    return () => clearTimeout(t)
+  }, [notice])
 
   async function saveAccounts(updated) {
     setSaving(true)
@@ -42,8 +52,12 @@ export default function AccountsPanel() {
   function addAccount(e) {
     e.preventDefault()
     if (!handle.trim() || !name.trim()) return
-    const cleaned = handle.replace('@', '').trim()
-    if (accounts.some((a) => a.handle === cleaned)) return
+    const cleaned = handle.replace(/^@/, '').trim()
+    if (!cleaned) return
+    if (accounts.some((a) => a.handle.toLowerCase() === cleaned.toLowerCase())) {
+      setNotice(`@${cleaned} is already tracked`)
+      return
+    }
     saveAccounts([...accounts, { handle: cleaned, name: name.trim(), category }])
     setHandle('')
     setName('')
@@ -62,6 +76,9 @@ export default function AccountsPanel() {
       <div className="empty-state">
         <h2 className="empty-state__title">Failed to load accounts</h2>
         <p className="empty-state__text">{error}</p>
+        <button className="btn btn--ghost" onClick={fetchAccounts} style={{ marginTop: 16 }}>
+          Try again
+        </button>
       </div>
     )
   }
@@ -75,6 +92,7 @@ export default function AccountsPanel() {
           value={handle}
           onChange={(e) => setHandle(e.target.value)}
           aria-label="Twitter handle"
+          maxLength={50}
           required
         />
         <input
@@ -83,6 +101,7 @@ export default function AccountsPanel() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           aria-label="Display name"
+          maxLength={100}
           required
         />
         <select
@@ -100,13 +119,20 @@ export default function AccountsPanel() {
         </button>
       </form>
 
+      {notice && (
+        <div className="toast toast--info toast--inline">{notice}</div>
+      )}
+
       {error && accounts.length > 0 && (
-        <div className="toast toast--error toast--inline">
-          {error}
-        </div>
+        <div className="toast toast--error toast--inline">{error}</div>
       )}
 
       <div className="panel__list">
+        {accounts.length === 0 && !error && (
+          <div className="empty-state">
+            <p className="empty-state__text">No accounts tracked yet. Add one above.</p>
+          </div>
+        )}
         {accounts.map((account) => (
           <div key={account.handle} className="panel__item">
             <div className="panel__item-info">

@@ -1,8 +1,17 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import PostCard from './PostCard'
 
 const TIERS = ['All', 'High', 'Mid', 'Low']
 const CATEGORIES = ['All', 'GTM', 'SaaS', 'Sales', 'PLG', 'Growth', 'AI', 'Startup']
+
+function useDebounce(value, delay) {
+  const [debounced, setDebounced] = useState(value)
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay)
+    return () => clearTimeout(timer)
+  }, [value, delay])
+  return debounced
+}
 
 export default function Feed() {
   const [posts, setPosts] = useState([])
@@ -11,24 +20,40 @@ export default function Feed() {
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const abortRef = useRef(null)
 
-  useEffect(() => {
-    fetch('/api/posts')
+  const debouncedSearch = useDebounce(search, 200)
+
+  const fetchPosts = useCallback(() => {
+    if (abortRef.current) abortRef.current.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+
+    setLoading(true)
+    setError(null)
+
+    fetch('/api/posts', { signal: controller.signal })
       .then((r) => {
         if (!r.ok) throw new Error(`Server returned ${r.status}`)
         return r.json()
       })
       .then((data) => {
-        setPosts(data)
+        setPosts(Array.isArray(data) ? data : [])
         setLoading(false)
       })
       .catch((err) => {
+        if (err.name === 'AbortError') return
         setError(err.message)
         setLoading(false)
       })
   }, [])
 
-  const hasActiveFilters = tier !== 'All' || category !== 'All' || search.trim()
+  useEffect(() => {
+    fetchPosts()
+    return () => { if (abortRef.current) abortRef.current.abort() }
+  }, [fetchPosts])
+
+  const hasActiveFilters = tier !== 'All' || category !== 'All' || debouncedSearch.trim()
 
   function clearFilters() {
     setTier('All')
@@ -47,8 +72,8 @@ export default function Feed() {
       result = result.filter((p) => p.category === category)
     }
 
-    if (search.trim()) {
-      const q = search.toLowerCase()
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.toLowerCase()
       result = result.filter(
         (p) =>
           (p.text && p.text.toLowerCase().includes(q)) ||
@@ -59,7 +84,7 @@ export default function Feed() {
     }
 
     return [...result].sort((a, b) => (b.score || 0) - (a.score || 0))
-  }, [posts, tier, category, search])
+  }, [posts, tier, category, debouncedSearch])
 
   const scored = posts.filter((p) => p.score != null)
   const highCount = scored.filter((p) => p.score >= 85).length
@@ -70,6 +95,9 @@ export default function Feed() {
       <div className="empty-state">
         <h2 className="empty-state__title">Failed to load posts</h2>
         <p className="empty-state__text">{error}</p>
+        <button className="btn btn--ghost" onClick={fetchPosts} style={{ marginTop: 16 }}>
+          Try again
+        </button>
       </div>
     )
   }
