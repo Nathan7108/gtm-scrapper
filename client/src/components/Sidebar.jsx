@@ -24,11 +24,11 @@ const NAV_ITEMS = [
 ]
 
 const ChevronLeft = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
 )
 
 const ChevronRight = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
 )
 
 export default function Sidebar({ collapsed, onToggle }) {
@@ -39,12 +39,16 @@ export default function Sidebar({ collapsed, onToggle }) {
           <div className="sidebar__logo-mark">G</div>
           <span className="sidebar__brand-text">GTM Intel</span>
         </div>
-        <button className="sidebar__toggle" onClick={onToggle} title={collapsed ? 'Expand' : 'Collapse'}>
+        <button
+          className="sidebar__toggle"
+          onClick={onToggle}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
           {collapsed ? <ChevronRight /> : <ChevronLeft />}
         </button>
       </div>
 
-      <nav className="sidebar__nav">
+      <nav className="sidebar__nav" aria-label="Main navigation">
         {!collapsed && <div className="nav-section">Navigation</div>}
         {NAV_ITEMS.map((item) => (
           <NavLink
@@ -52,9 +56,10 @@ export default function Sidebar({ collapsed, onToggle }) {
             to={item.to}
             end={item.to === '/'}
             className={({ isActive }) => `nav-item ${isActive ? 'nav-item--active' : ''}`}
+            aria-label={collapsed ? item.label : undefined}
             title={collapsed ? item.label : undefined}
           >
-            <span className="nav-item__icon">{item.icon}</span>
+            <span className="nav-item__icon" aria-hidden="true">{item.icon}</span>
             {!collapsed && item.label}
           </NavLink>
         ))}

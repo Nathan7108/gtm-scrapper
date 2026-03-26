@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { useState, useEffect, useCallback } from 'react'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
 import Feed from './components/Feed'
 import AccountsPanel from './components/AccountsPanel'
@@ -17,6 +17,12 @@ const PAGES = {
 export default function App() {
   const [collapsed, setCollapsed] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
+  const location = useLocation()
+
+  useEffect(() => {
+    const page = PAGES[location.pathname]
+    document.title = page ? `${page.title} — GTM Intel` : 'GTM Intel'
+  }, [location.pathname])
 
   return (
     <div className="app">
@@ -45,6 +51,14 @@ function PageLayout({ page, children, onRefresh }) {
   const [scoring, setScoring] = useState(false)
   const [status, setStatus] = useState(null)
 
+  const dismissStatus = useCallback(() => setStatus(null), [])
+
+  useEffect(() => {
+    if (!status) return
+    const timer = setTimeout(dismissStatus, 5000)
+    return () => clearTimeout(timer)
+  }, [status, dismissStatus])
+
   async function handleScrape() {
     setScraping(true)
     setStatus(null)
@@ -55,10 +69,10 @@ function PageLayout({ page, children, onRefresh }) {
         setStatus({ type: 'success', message: `${data.newPosts} new posts scraped` })
         onRefresh?.()
       } else {
-        setStatus({ type: 'error', message: data.message })
+        setStatus({ type: 'error', message: data.message || 'Scrape failed' })
       }
     } catch {
-      setStatus({ type: 'error', message: 'Scrape request failed' })
+      setStatus({ type: 'error', message: 'Could not reach the server. Is it running?' })
     }
     setScraping(false)
   }
@@ -73,10 +87,10 @@ function PageLayout({ page, children, onRefresh }) {
         setStatus({ type: 'success', message: `${data.scored} posts scored` })
         onRefresh?.()
       } else {
-        setStatus({ type: 'error', message: data.message })
+        setStatus({ type: 'error', message: data.message || 'Scoring failed' })
       }
     } catch {
-      setStatus({ type: 'error', message: 'Score request failed' })
+      setStatus({ type: 'error', message: 'Could not reach the server. Is it running?' })
     }
     setScoring(false)
   }
@@ -89,7 +103,7 @@ function PageLayout({ page, children, onRefresh }) {
           <div className="main__subtitle">{current.subtitle}</div>
         </div>
         {page === '/' && (
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '6px' }}>
             <button className="btn btn--ghost" onClick={handleScrape} disabled={scraping}>
               {scraping ? 'Scraping...' : 'Scrape'}
             </button>
@@ -100,9 +114,11 @@ function PageLayout({ page, children, onRefresh }) {
         )}
       </header>
       {status && (
-        <div className={`toast toast--${status.type}`}>
-          {status.message}
-          <button className="toast__close" onClick={() => setStatus(null)}>&times;</button>
+        <div className="toast-region" role="status" aria-live="polite">
+          <div className={`toast toast--${status.type}`}>
+            {status.message}
+            <button className="toast__close" onClick={dismissStatus} aria-label="Dismiss">&times;</button>
+          </div>
         </div>
       )}
       <div className="main__content">

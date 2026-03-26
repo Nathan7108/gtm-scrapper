@@ -21,6 +21,14 @@ export default function Feed() {
       .catch(() => setLoading(false))
   }, [])
 
+  const hasActiveFilters = tier !== 'All' || category !== 'All' || search.trim()
+
+  function clearFilters() {
+    setTier('All')
+    setCategory('All')
+    setSearch('')
+  }
+
   const filtered = useMemo(() => {
     let result = posts
 
@@ -53,23 +61,22 @@ export default function Feed() {
 
   return (
     <>
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-card__label">Total</div>
-          <div className="stat-card__value">{posts.length}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-card__label">Scored</div>
-          <div className="stat-card__value stat-card__value--accent">{scored.length}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-card__label">High</div>
-          <div className="stat-card__value stat-card__value--high">{highCount}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-card__label">Mid</div>
-          <div className="stat-card__value stat-card__value--mid">{midCount}</div>
-        </div>
+      <div className="feed-summary">
+        <span><span className="feed-summary__number">{posts.length}</span> posts</span>
+        <span className="feed-summary__sep">/</span>
+        <span><span className="feed-summary__number">{scored.length}</span> scored</span>
+        {highCount > 0 && (
+          <>
+            <span className="feed-summary__sep">/</span>
+            <span className="feed-summary__high"><span className="feed-summary__number">{highCount}</span> high</span>
+          </>
+        )}
+        {midCount > 0 && (
+          <>
+            <span className="feed-summary__sep">/</span>
+            <span className="feed-summary__mid"><span className="feed-summary__number">{midCount}</span> mid</span>
+          </>
+        )}
       </div>
 
       <div className="filters">
@@ -80,6 +87,7 @@ export default function Feed() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+        <div className="filter-sep" />
         <div className="filter-group">
           {TIERS.map((t) => (
             <button
@@ -91,17 +99,19 @@ export default function Feed() {
             </button>
           ))}
         </div>
-        <div className="filter-group">
+        <div className="filter-sep" />
+        <select
+          className="category-select"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+        >
           {CATEGORIES.map((c) => (
-            <button
-              key={c}
-              className={`filter-btn filter-btn--cat ${category === c ? 'filter-btn--active' : ''}`}
-              onClick={() => setCategory(c)}
-            >
-              {c}
-            </button>
+            <option key={c} value={c}>{c === 'All' ? 'All categories' : c}</option>
           ))}
-        </div>
+        </select>
+        {hasActiveFilters && (
+          <button className="filter-clear" onClick={clearFilters}>Clear</button>
+        )}
       </div>
 
       {loading ? (
@@ -110,16 +120,40 @@ export default function Feed() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-state__title">No posts found</div>
-          <div className="empty-state__text">
-            {posts.length === 0
-              ? 'Use the Scrape button to pull tweets, then Score to rank them.'
-              : 'Try adjusting your filters.'}
-          </div>
+          {posts.length === 0 ? (
+            <>
+              <div className="empty-state__title">No posts yet</div>
+              <div className="empty-state__text">Get started in three steps</div>
+              <div className="empty-state__steps">
+                <div className="empty-step">
+                  <div className="empty-step__num">1</div>
+                  <div className="empty-step__label">Scrape</div>
+                  <div className="empty-step__desc">Pull tweets from tracked accounts</div>
+                </div>
+                <div className="empty-step">
+                  <div className="empty-step__num">2</div>
+                  <div className="empty-step__label">Score</div>
+                  <div className="empty-step__desc">Rank posts by GTM relevance</div>
+                </div>
+                <div className="empty-step">
+                  <div className="empty-step__num">3</div>
+                  <div className="empty-step__label">Browse</div>
+                  <div className="empty-step__desc">Filter and find what matters</div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="empty-state__title">No matches</div>
+              <div className="empty-state__text">
+                Try different filters or <button className="filter-clear" onClick={clearFilters}>clear all</button>
+              </div>
+            </>
+          )}
         </div>
       ) : (
         <div className="feed">
-          <div className="feed__count">{filtered.length} post{filtered.length !== 1 ? 's' : ''}</div>
+          <div className="feed__count">{filtered.length} result{filtered.length !== 1 ? 's' : ''}</div>
           {filtered.map((post) => (
             <PostCard key={post.id} post={post} />
           ))}

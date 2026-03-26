@@ -4,6 +4,7 @@ export default function TopicsPanel() {
   const [topics, setTopics] = useState([])
   const [newTopic, setNewTopic] = useState('')
   const [saving, setSaving] = useState(false)
+  const [removing, setRemoving] = useState(null)
 
   useEffect(() => {
     fetch('/api/topics')
@@ -20,6 +21,7 @@ export default function TopicsPanel() {
     })
     setTopics(updated)
     setSaving(false)
+    setRemoving(null)
   }
 
   function addTopic(e) {
@@ -32,7 +34,11 @@ export default function TopicsPanel() {
   }
 
   function removeTopic(topicToRemove) {
-    saveTopics(topics.filter((t) => t !== topicToRemove))
+    if (removing === topicToRemove) {
+      saveTopics(topics.filter((t) => t !== topicToRemove))
+    } else {
+      setRemoving(topicToRemove)
+    }
   }
 
   return (
@@ -44,9 +50,10 @@ export default function TopicsPanel() {
           value={newTopic}
           onChange={(e) => setNewTopic(e.target.value)}
           style={{ flex: 1 }}
+          required
         />
         <button className="btn btn--primary" type="submit" disabled={saving}>
-          Add Topic
+          Add
         </button>
       </form>
 
@@ -57,10 +64,11 @@ export default function TopicsPanel() {
               <span className="panel__item-name">{topic}</span>
             </div>
             <button
-              className="btn btn--ghost btn--small"
+              className={`btn btn--ghost btn--small ${removing === topic ? 'btn--danger' : ''}`}
               onClick={() => removeTopic(topic)}
+              onBlur={() => setRemoving(null)}
             >
-              Remove
+              {removing === topic ? 'Confirm?' : 'Remove'}
             </button>
           </div>
         ))}

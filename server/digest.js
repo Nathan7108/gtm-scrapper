@@ -22,19 +22,19 @@ function buildDigestHTML(posts) {
     .map(
       (p, i) => `
       <tr>
-        <td style="padding: 16px 0; border-bottom: 1px solid #21262d;">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-            <span style="font-weight: 600; color: #c9d1d9;">#${i + 1} — @${p.handle}</span>
-            <span style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: ${
-              p.score >= 85 ? '#f97316' : '#3b82f6'
-            }; font-weight: 700;">${p.score}</span>
+        <td style="padding: 14px 0; border-bottom: 1px solid #e2dfd7;">
+          <div style="margin-bottom: 4px;">
+            <span style="font-weight: 600; color: #262420;">#${i + 1} — @${p.handle}</span>
+            <span style="float: right; font-family: monospace; font-size: 13px; color: ${
+              p.score >= 85 ? '#6d5e10' : '#3d5a78'
+            }; font-weight: 600;">${p.score}</span>
           </div>
-          <p style="color: #8b949e; font-size: 14px; line-height: 1.5; margin: 0 0 8px 0;">${p.text?.slice(0, 280) || ''}${
+          <p style="color: #6e6a60; font-size: 14px; line-height: 1.5; margin: 0 0 6px 0;">${p.text?.slice(0, 280) || ''}${
         (p.text?.length || 0) > 280 ? '...' : ''
       }</p>
           ${
             p.insight
-              ? `<div style="background: rgba(0, 212, 170, 0.08); border-left: 3px solid #00d4aa; padding: 8px 12px; font-size: 13px; color: #00d4aa; border-radius: 0 4px 4px 0;">${p.insight}</div>`
+              ? `<div style="background: #f0ece3; border-left: 2px solid #5a4f3e; padding: 6px 10px; font-size: 13px; color: #5a4f3e; border-radius: 0 4px 4px 0;">${p.insight}</div>`
               : ''
           }
         </td>
@@ -46,22 +46,22 @@ function buildDigestHTML(posts) {
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
-<body style="background: #0a0e13; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 40px 20px; margin: 0;">
-  <div style="max-width: 600px; margin: 0 auto;">
-    <div style="text-align: center; margin-bottom: 32px;">
-      <h1 style="font-family: 'IBM Plex Mono', monospace; font-size: 20px; color: #00d4aa; margin: 0;">GTM INTEL</h1>
-      <p style="color: #8b949e; font-size: 13px; margin-top: 4px;">Daily Signal Digest — ${date}</p>
+<body style="background: #f6f5f1; color: #262420; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 40px 20px; margin: 0;">
+  <div style="max-width: 560px; margin: 0 auto;">
+    <div style="margin-bottom: 24px;">
+      <h1 style="font-size: 18px; color: #262420; margin: 0; font-weight: 600;">GTM Intel</h1>
+      <p style="color: #a09a8e; font-size: 13px; margin-top: 2px;">${date}</p>
     </div>
 
-    <div style="background: #111820; border: 1px solid #21262d; border-radius: 8px; padding: 20px;">
-      <h2 style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #58a6ff; margin: 0 0 16px 0; text-transform: uppercase; letter-spacing: 0.05em;">Top ${posts.length} Posts</h2>
+    <div style="background: #ffffff; border: 1px solid #e2dfd7; border-radius: 6px; padding: 18px;">
+      <h2 style="font-size: 12px; color: #a09a8e; margin: 0 0 14px 0; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500;">Top ${posts.length} posts</h2>
       <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse;">
         ${postRows}
       </table>
     </div>
 
-    <div style="text-align: center; margin-top: 24px; color: #484f58; font-size: 12px;">
-      <p>Powered by GTM Intel — Signal Intelligence Platform</p>
+    <div style="text-align: center; margin-top: 20px; color: #a09a8e; font-size: 11px;">
+      <p>GTM Intel</p>
     </div>
   </div>
 </body>

@@ -8,6 +8,7 @@ export default function AccountsPanel() {
   const [name, setName] = useState('')
   const [category, setCategory] = useState('GTM')
   const [saving, setSaving] = useState(false)
+  const [removing, setRemoving] = useState(null)
 
   useEffect(() => {
     fetch('/api/accounts')
@@ -24,6 +25,7 @@ export default function AccountsPanel() {
     })
     setAccounts(updated)
     setSaving(false)
+    setRemoving(null)
   }
 
   function addAccount(e) {
@@ -37,7 +39,11 @@ export default function AccountsPanel() {
   }
 
   function removeAccount(handleToRemove) {
-    saveAccounts(accounts.filter((a) => a.handle !== handleToRemove))
+    if (removing === handleToRemove) {
+      saveAccounts(accounts.filter((a) => a.handle !== handleToRemove))
+    } else {
+      setRemoving(handleToRemove)
+    }
   }
 
   return (
@@ -48,15 +54,17 @@ export default function AccountsPanel() {
           placeholder="@handle"
           value={handle}
           onChange={(e) => setHandle(e.target.value)}
+          required
         />
         <input
           className="search-input"
           placeholder="Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          required
         />
         <select
-          className="search-input"
+          className="category-select"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
         >
@@ -75,13 +83,14 @@ export default function AccountsPanel() {
             <div className="panel__item-info">
               <span className="panel__item-name">{account.name}</span>
               <span className="panel__item-handle">@{account.handle}</span>
-              <span className="badge badge--small">{account.category}</span>
+              <span className="badge badge--small badge--category">{account.category}</span>
             </div>
             <button
-              className="btn btn--ghost btn--small"
+              className={`btn btn--ghost btn--small ${removing === account.handle ? 'btn--danger' : ''}`}
               onClick={() => removeAccount(account.handle)}
+              onBlur={() => setRemoving(null)}
             >
-              Remove
+              {removing === account.handle ? 'Confirm?' : 'Remove'}
             </button>
           </div>
         ))}
