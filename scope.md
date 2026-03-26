@@ -19,7 +19,7 @@ A modern React app that scrapes Twitter/X accounts and topics, scores content fo
 
 - **Frontend** — React 18, Vite, Tailwind CSS
 - **Scraping** — Apify Twitter Scraper (via Apify API)
-- **AI Scoring** — Anthropic Claude API (claude-sonnet-4-20250514)
+- **AI Scoring** — Claude via local proxy (Claude Max) or Ollama (free local LLM)
 - **Backend** — Node.js / Express (scrape runner + scoring endpoint)
 - **Email Digest** — Nodemailer or Resend API
 - **Storage** — Local JSON or Supabase (optional)

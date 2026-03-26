@@ -31,14 +31,16 @@
 - Write results to `data/posts.json`
 - **Deliverable:** Hit `/api/scrape`, get raw tweets saved to disk
 
-### Issue 4: Claude AI scoring pipeline
-- Install `@anthropic-ai/sdk`
-- Build `server/scorer.js` — batch score posts via Claude
+### Issue 4: LLM scoring pipeline (free — Claude Code proxy + Ollama fallback)
+- Build multi-provider LLM service (same pattern as ai-sdr)
+  - **Claude Code proxy** (primary) — OpenAI-compatible API on `localhost:4171`, uses your Max subscription for free
+  - **Ollama** (fallback) — local `llama3.1:8b`, zero cost, no API key
+- Build `server/scorer.js` — batch score posts via LLM provider
 - Prompt includes Uplinq context, GTM relevance criteria
 - Each post gets: score (0–100), tier (High/Mid/Low), one-line insight
 - Add `POST /api/score` endpoint to score unscored posts
 - Update `data/posts.json` with scores
-- **Deliverable:** Raw posts go in, scored posts come out
+- **Deliverable:** Raw posts go in, scored posts come out — no paid API keys needed
 
 ---
 
