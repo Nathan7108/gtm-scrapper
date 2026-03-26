@@ -1,0 +1,16 @@
+[
+  { "handle": "codyschneiderxx", "name": "Cody Schneider", "category": "GTM" },
+  { "handle": "jasonlk", "name": "Jason Lemkin", "category": "SaaS" },
+  { "handle": "samblond", "name": "Sam Blond", "category": "Sales" },
+  { "handle": "kyle_poyar", "name": "Kyle Poyar", "category": "PLG" },
+  { "handle": "gregisenberg", "name": "Greg Isenberg", "category": "GTM" },
+  { "handle": "austinbelcak", "name": "Austin Belcak", "category": "Growth" },
+  { "handle": "sama", "name": "Sam Altman", "category": "AI" },
+  { "handle": "karpathy", "name": "Andrej Karpathy", "category": "AI" },
+  { "handle": "paulg", "name": "Paul Graham", "category": "Startup" },
+  { "handle": "naval", "name": "Naval", "category": "Startup" },
+  { "handle": "aaronross", "name": "Aaron Ross", "category": "Sales" },
+  { "handle": "justinwelsh", "name": "Justin Welsh", "category": "Growth" },
+  { "handle": "alexhormozi", "name": "Alex Hormozi", "category": "Growth" },
+  { "handle": "nickabrahams", "name": "Nick Abrahams", "category": "Sales" }
+]
