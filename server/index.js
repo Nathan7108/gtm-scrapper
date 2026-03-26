@@ -136,8 +136,8 @@ app.use((err, req, res, _next) => {
 app.listen(PORT, () => {
   console.log(`[GTM Intel] Server running on http://localhost:${PORT}`)
 
-  // Auto-start scheduler if APIFY_API_TOKEN is set
-  if (process.env.APIFY_API_TOKEN) {
+  // Auto-start scheduler (scraper works in guest mode, no key needed)
+  if (process.env.AUTO_SCHEDULE !== 'false') {
     startScheduler()
   }
 })

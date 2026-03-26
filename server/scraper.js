@@ -1,4 +1,4 @@
-const { ApifyClient } = require('apify-client')
+const { Scraper, SearchMode } = require('@the-convocation/twitter-scraper')
 const fs = require('fs')
 const path = require('path')
 
@@ -14,23 +14,38 @@ function writeJSON(file, data) {
   fs.writeFileSync(path.join(dataDir, file), JSON.stringify(data, null, 2))
 }
 
-function generateId(tweet) {
-  return `${tweet.author?.userName || 'unknown'}_${tweet.id || Date.now()}`
+async function createClient() {
+  const scraper = new Scraper()
+  const username = process.env.TWITTER_USERNAME
+  const password = process.env.TWITTER_PASSWORD
+
+  if (username && password) {
+    console.log(`[Scraper] Logging in as @${username}...`)
+    await scraper.login(username, password)
+    console.log('[Scraper] Logged in — search enabled')
+  } else {
+    console.log('[Scraper] No credentials — using guest mode (account scraping only, no keyword search)')
+  }
+
+  return scraper
 }
 
 function normalizeTweet(raw, source, sourceValue) {
+  const handle = raw.username || 'unknown'
+  const tweetId = raw.id || String(Date.now())
+
   return {
-    id: generateId(raw),
-    tweetId: raw.id || null,
-    text: raw.text || raw.full_text || '',
-    author: raw.author?.name || raw.user?.name || 'Unknown',
-    handle: raw.author?.userName || raw.user?.screen_name || 'unknown',
-    avatar: raw.author?.profileImageUrl || raw.user?.profile_image_url_https || null,
-    date: raw.createdAt || raw.created_at || new Date().toISOString(),
-    likes: raw.likeCount || raw.favorite_count || 0,
-    retweets: raw.retweetCount || raw.retweet_count || 0,
-    replies: raw.replyCount || raw.reply_count || 0,
-    url: raw.url || (raw.id ? `https://x.com/i/status/${raw.id}` : null),
+    id: `${handle}_${tweetId}`,
+    tweetId,
+    text: raw.text || '',
+    author: raw.name || 'Unknown',
+    handle,
+    avatar: raw.avatar || null,
+    date: raw.timeParsed?.toISOString() || raw.timestamp?.toString() || new Date().toISOString(),
+    likes: raw.likes || 0,
+    retweets: raw.retweets || 0,
+    replies: raw.replies || 0,
+    url: raw.permanentUrl || `https://x.com/${handle}/status/${tweetId}`,
     source,
     sourceValue,
     score: null,
@@ -41,35 +56,40 @@ function normalizeTweet(raw, source, sourceValue) {
   }
 }
 
-async function scrapeByAccount(client, handle, maxTweets = 20) {
-  console.log(`[Scraper] Scraping account: @${handle} (max ${maxTweets})`)
+async function scrapeByAccount(scraper, handle, maxTweets) {
+  console.log(`[Scraper] Scraping @${handle} (max ${maxTweets})`)
 
-  const run = await client.actor('quacker/twitter-scraper').call({
-    handles: [handle],
-    tweetsDesired: maxTweets,
-    proxyConfig: { useApifyProxy: true }
-  })
+  const tweets = []
+  const iterator = scraper.getTweets(handle, maxTweets)
 
-  const { items } = await client.dataset(run.defaultDatasetId).listItems()
-  console.log(`[Scraper] Got ${items.length} tweets from @${handle}`)
+  for await (const tweet of iterator) {
+    if (tweets.length >= maxTweets) break
+    if (tweet.text) tweets.push(tweet)
+  }
 
-  return items.map(tweet => normalizeTweet(tweet, 'account', handle))
+  console.log(`[Scraper] Got ${tweets.length} tweets from @${handle}`)
+  return tweets.map(t => normalizeTweet(t, 'account', handle))
 }
 
-async function scrapeByTopic(client, keyword, maxTweets = 20) {
+async function scrapeByTopic(scraper, keyword, maxTweets) {
   console.log(`[Scraper] Scraping topic: "${keyword}" (max ${maxTweets})`)
 
-  const run = await client.actor('quacker/twitter-scraper').call({
-    searchTerms: [keyword],
-    tweetsDesired: maxTweets,
-    searchMode: 'live',
-    proxyConfig: { useApifyProxy: true }
-  })
+  const isLoggedIn = await scraper.isLoggedIn()
+  if (!isLoggedIn) {
+    console.log(`[Scraper] Skipping topic "${keyword}" — search requires login`)
+    return []
+  }
 
-  const { items } = await client.dataset(run.defaultDatasetId).listItems()
-  console.log(`[Scraper] Got ${items.length} tweets for "${keyword}"`)
+  const tweets = []
+  const iterator = scraper.searchTweets(keyword, maxTweets, SearchMode.Latest)
 
-  return items.map(tweet => normalizeTweet(tweet, 'topic', keyword))
+  for await (const tweet of iterator) {
+    if (tweets.length >= maxTweets) break
+    if (tweet.text) tweets.push(tweet)
+  }
+
+  console.log(`[Scraper] Got ${tweets.length} tweets for "${keyword}"`)
+  return tweets.map(t => normalizeTweet(t, 'topic', keyword))
 }
 
 function deduplicatePosts(existing, newPosts) {
@@ -89,12 +109,7 @@ function deduplicatePosts(existing, newPosts) {
 }
 
 async function runScrape({ accounts = true, topics = true, maxTweetsPerSource = 20 } = {}) {
-  const token = process.env.APIFY_API_TOKEN
-  if (!token) {
-    throw new Error('APIFY_API_TOKEN not set in .env')
-  }
-
-  const client = new ApifyClient({ token })
+  const scraper = await createClient()
   const allNewPosts = []
   const errors = []
 
@@ -102,8 +117,7 @@ async function runScrape({ accounts = true, topics = true, maxTweetsPerSource = 
     const accountList = readJSON('accounts.json')
     for (const account of accountList) {
       try {
-        const posts = await scrapeByAccount(client, account.handle, maxTweetsPerSource)
-        // Tag with category from accounts.json
+        const posts = await scrapeByAccount(scraper, account.handle, maxTweetsPerSource)
         posts.forEach(p => { p.category = account.category })
         allNewPosts.push(...posts)
       } catch (err) {
@@ -117,7 +131,7 @@ async function runScrape({ accounts = true, topics = true, maxTweetsPerSource = 
     const topicList = readJSON('topics.json')
     for (const keyword of topicList) {
       try {
-        const posts = await scrapeByTopic(client, keyword, maxTweetsPerSource)
+        const posts = await scrapeByTopic(scraper, keyword, maxTweetsPerSource)
         allNewPosts.push(...posts)
       } catch (err) {
         console.error(`[Scraper] Error scraping topic "${keyword}":`, err.message)
@@ -126,11 +140,9 @@ async function runScrape({ accounts = true, topics = true, maxTweetsPerSource = 
     }
   }
 
-  // Deduplicate against existing posts
   const existingPosts = readJSON('posts.json')
   const uniqueNew = deduplicatePosts(existingPosts, allNewPosts)
 
-  // Merge and save
   const merged = [...existingPosts, ...uniqueNew]
   writeJSON('posts.json', merged)
 
