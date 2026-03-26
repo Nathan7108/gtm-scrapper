@@ -6,6 +6,8 @@ require('dotenv').config()
 
 const { runScrape } = require('./scraper')
 const { runScore } = require('./scorer')
+const { sendDigest } = require('./digest')
+const { startScheduler, stopScheduler, getSchedulerStatus } = require('./scheduler')
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -93,10 +95,49 @@ app.post('/api/score', async (req, res) => {
   }
 })
 
+// Digest endpoint (Issue 9)
+app.post('/api/digest', async (req, res) => {
+  const { topN = 5, preview = false } = req.body || {}
+  try {
+    const result = await sendDigest({ topN, preview })
+    res.json(result)
+  } catch (err) {
+    console.error('[Server] Digest failed:', err.message)
+    res.status(500).json({ status: 'error', message: err.message })
+  }
+})
+
+// Scheduler endpoints (Issue 10)
+app.post('/api/scheduler/start', (req, res) => {
+  const { cron: cronExpr = '0 8 * * *' } = req.body || {}
+  startScheduler(cronExpr)
+  res.json({ status: 'started', cron: cronExpr })
+})
+
+app.post('/api/scheduler/stop', (req, res) => {
+  stopScheduler()
+  res.json({ status: 'stopped' })
+})
+
+app.get('/api/scheduler/status', (req, res) => {
+  res.json(getSchedulerStatus())
+})
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
 
+// Global error handler
+app.use((err, req, res, _next) => {
+  console.error('[Server] Unhandled error:', err.message)
+  res.status(500).json({ status: 'error', message: 'Internal server error' })
+})
+
 app.listen(PORT, () => {
   console.log(`[GTM Intel] Server running on http://localhost:${PORT}`)
+
+  // Auto-start scheduler if APIFY_API_TOKEN is set
+  if (process.env.APIFY_API_TOKEN) {
+    startScheduler()
+  }
 })
