@@ -479,6 +479,48 @@ body::before {
   border-color: rgba(0, 212, 170, 0.3);
 }
 
+.filter-btn--cat {
+  font-size: 0.65rem;
+  padding: 4px 10px;
+}
+
+.filter-group {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.search-input {
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  padding: 8px 14px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  outline: none;
+  width: 260px;
+  transition: border-color 0.15s ease;
+}
+
+.search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-input:focus {
+  border-color: var(--accent);
+  box-shadow: var(--accent-glow);
+}
+
+.feed__count {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 /* Empty State */
 .empty-state {
   text-align: center;
@@ -536,6 +578,83 @@ body::before {
 .btn--ghost:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
+}
+
+.btn--small {
+  font-size: 0.7rem;
+  padding: 4px 12px;
+}
+
+/* Panels (Accounts, Topics) */
+.panel {
+  max-width: 720px;
+}
+
+.panel__form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.panel__form .search-input {
+  width: auto;
+  min-width: 160px;
+}
+
+.panel__form select.search-input {
+  cursor: pointer;
+}
+
+.panel__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.panel__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  transition: background 0.15s ease;
+}
+
+.panel__item:hover {
+  background: var(--bg-hover);
+}
+
+.panel__item-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panel__item-name {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.panel__item-handle {
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.badge--small {
+  font-size: 0.6rem;
+  padding: 2px 8px;
+}
+
+/* Nav links (React Router) */
+a.nav-item {
+  text-decoration: none;
+  color: inherit;
 }
 
 /* Scan line effect for header */

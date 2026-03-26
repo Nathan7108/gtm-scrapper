@@ -1,12 +1,14 @@
+import { NavLink } from 'react-router-dom'
+
 const NAV_ITEMS = [
-  { key: 'feed', label: 'Intel Feed', icon: '◉' },
-  { key: 'accounts', label: 'Accounts', icon: '⊕' },
-  { key: 'topics', label: 'Topics', icon: '⬡' },
-  { key: 'digest', label: 'Digest', icon: '⊞' },
-  { key: 'settings', label: 'Settings', icon: '⚙' },
+  { to: '/', label: 'Intel Feed', icon: '◉' },
+  { to: '/accounts', label: 'Accounts', icon: '⊕' },
+  { to: '/topics', label: 'Topics', icon: '⬡' },
+  { to: '/digest', label: 'Digest', icon: '⊞' },
+  { to: '/settings', label: 'Settings', icon: '⚙' },
 ]
 
-export default function Sidebar({ activePage, onNavigate }) {
+export default function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar__logo">
@@ -17,14 +19,15 @@ export default function Sidebar({ activePage, onNavigate }) {
       <nav className="sidebar__nav">
         <div className="nav-section">Navigation</div>
         {NAV_ITEMS.map((item) => (
-          <div
-            key={item.key}
-            className={`nav-item ${activePage === item.key ? 'nav-item--active' : ''}`}
-            onClick={() => onNavigate(item.key)}
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.to === '/'}
+            className={({ isActive }) => `nav-item ${isActive ? 'nav-item--active' : ''}`}
           >
             <span className="nav-item__icon">{item.icon}</span>
             {item.label}
-          </div>
+          </NavLink>
         ))}
       </nav>
 
