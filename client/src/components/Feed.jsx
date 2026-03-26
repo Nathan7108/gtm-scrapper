@@ -24,18 +24,15 @@ export default function Feed() {
   const filtered = useMemo(() => {
     let result = posts
 
-    // Tier filter
     if (tier === 'High') result = result.filter((p) => p.score >= 85)
     else if (tier === 'Mid') result = result.filter((p) => p.score >= 65 && p.score < 85)
     else if (tier === 'Low') result = result.filter((p) => p.score != null && p.score < 65)
     else result = result.filter((p) => p.score != null)
 
-    // Category filter
     if (category !== 'All') {
       result = result.filter((p) => p.category === category)
     }
 
-    // Keyword search
     if (search.trim()) {
       const q = search.toLowerCase()
       result = result.filter(
@@ -58,7 +55,7 @@ export default function Feed() {
     <>
       <div className="stats-grid">
         <div className="stat-card">
-          <div className="stat-card__label">Total Posts</div>
+          <div className="stat-card__label">Total</div>
           <div className="stat-card__value">{posts.length}</div>
         </div>
         <div className="stat-card">
@@ -66,12 +63,12 @@ export default function Feed() {
           <div className="stat-card__value stat-card__value--accent">{scored.length}</div>
         </div>
         <div className="stat-card">
-          <div className="stat-card__label">High Signal</div>
-          <div className="stat-card__value" style={{ color: 'var(--high)' }}>{highCount}</div>
+          <div className="stat-card__label">High</div>
+          <div className="stat-card__value stat-card__value--high">{highCount}</div>
         </div>
         <div className="stat-card">
-          <div className="stat-card__label">Mid Signal</div>
-          <div className="stat-card__value" style={{ color: 'var(--moderate)' }}>{midCount}</div>
+          <div className="stat-card__label">Mid</div>
+          <div className="stat-card__value stat-card__value--mid">{midCount}</div>
         </div>
       </div>
 
@@ -79,7 +76,7 @@ export default function Feed() {
         <input
           type="text"
           className="search-input"
-          placeholder="Search posts, authors, insights..."
+          placeholder="Search..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -113,12 +110,11 @@ export default function Feed() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-state__icon">◎</div>
-          <div className="empty-state__title">No posts match</div>
+          <div className="empty-state__title">No posts found</div>
           <div className="empty-state__text">
             {posts.length === 0
-              ? 'Hit "Run Scrape" to pull tweets, then "Score Posts" to rank them.'
-              : 'Try adjusting your filters or search query.'}
+              ? 'Use the Scrape button to pull tweets, then Score to rank them.'
+              : 'Try adjusting your filters.'}
           </div>
         </div>
       ) : (

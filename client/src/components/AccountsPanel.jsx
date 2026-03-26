@@ -31,15 +31,13 @@ export default function AccountsPanel() {
     if (!handle.trim() || !name.trim()) return
     const cleaned = handle.replace('@', '').trim()
     if (accounts.some((a) => a.handle === cleaned)) return
-    const updated = [...accounts, { handle: cleaned, name: name.trim(), category }]
-    saveAccounts(updated)
+    saveAccounts([...accounts, { handle: cleaned, name: name.trim(), category }])
     setHandle('')
     setName('')
   }
 
   function removeAccount(handleToRemove) {
-    const updated = accounts.filter((a) => a.handle !== handleToRemove)
-    saveAccounts(updated)
+    saveAccounts(accounts.filter((a) => a.handle !== handleToRemove))
   }
 
   return (
@@ -53,7 +51,7 @@ export default function AccountsPanel() {
         />
         <input
           className="search-input"
-          placeholder="Display name"
+          placeholder="Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
@@ -67,7 +65,7 @@ export default function AccountsPanel() {
           ))}
         </select>
         <button className="btn btn--primary" type="submit" disabled={saving}>
-          Add Account
+          Add
         </button>
       </form>
 
@@ -77,9 +75,7 @@ export default function AccountsPanel() {
             <div className="panel__item-info">
               <span className="panel__item-name">{account.name}</span>
               <span className="panel__item-handle">@{account.handle}</span>
-              <span className={`badge badge--small badge--${account.category.toLowerCase()}`}>
-                {account.category}
-              </span>
+              <span className="badge badge--small">{account.category}</span>
             </div>
             <button
               className="btn btn--ghost btn--small"

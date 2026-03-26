@@ -7,20 +7,21 @@ import TopicsPanel from './components/TopicsPanel'
 import DigestPage from './components/DigestModal'
 
 const PAGES = {
-  '/': { title: 'Intelligence Feed', subtitle: 'Scored posts ranked by GTM relevance' },
-  '/accounts': { title: 'Tracked Accounts', subtitle: 'Manage monitored Twitter/X accounts' },
-  '/topics': { title: 'Topic Filters', subtitle: 'Configure keyword tracking' },
-  '/digest': { title: 'Email Digest', subtitle: 'Generate and send top-post summaries' },
-  '/settings': { title: 'Settings', subtitle: 'Configure scraping and scoring' },
+  '/': { title: 'Feed', subtitle: 'Posts ranked by relevance' },
+  '/accounts': { title: 'Accounts', subtitle: 'Tracked Twitter/X accounts' },
+  '/topics': { title: 'Topics', subtitle: 'Keyword tracking' },
+  '/digest': { title: 'Digest', subtitle: 'Email summaries' },
+  '/settings': { title: 'Settings', subtitle: 'Configuration' },
 }
 
 export default function App() {
+  const [collapsed, setCollapsed] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
 
   return (
     <div className="app">
-      <Sidebar />
-      <main className="main">
+      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
+      <main className={`main ${collapsed ? 'main--expanded' : ''}`}>
         <Routes>
           <Route path="/" element={
             <PageLayout page="/" onRefresh={() => setRefreshKey((k) => k + 1)}>
@@ -30,7 +31,7 @@ export default function App() {
           <Route path="/accounts" element={<PageLayout page="/accounts"><AccountsPanel /></PageLayout>} />
           <Route path="/topics" element={<PageLayout page="/topics"><TopicsPanel /></PageLayout>} />
           <Route path="/digest" element={<PageLayout page="/digest"><DigestPage /></PageLayout>} />
-          <Route path="/settings" element={<PageLayout page="/settings"><PlaceholderPage name="Settings" /></PageLayout>} />
+          <Route path="/settings" element={<PageLayout page="/settings"><PlaceholderPage /></PageLayout>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
@@ -51,7 +52,7 @@ function PageLayout({ page, children, onRefresh }) {
       const res = await fetch('/api/scrape', { method: 'POST' })
       const data = await res.json()
       if (data.status === 'completed') {
-        setStatus({ type: 'success', message: `Scraped ${data.newPosts} new posts (${data.totalPosts} total)` })
+        setStatus({ type: 'success', message: `${data.newPosts} new posts scraped` })
         onRefresh?.()
       } else {
         setStatus({ type: 'error', message: data.message })
@@ -69,7 +70,7 @@ function PageLayout({ page, children, onRefresh }) {
       const res = await fetch('/api/score', { method: 'POST' })
       const data = await res.json()
       if (data.status === 'completed') {
-        setStatus({ type: 'success', message: `Scored ${data.scored} posts (${data.remaining} remaining)` })
+        setStatus({ type: 'success', message: `${data.scored} posts scored` })
         onRefresh?.()
       } else {
         setStatus({ type: 'error', message: data.message })
@@ -82,7 +83,7 @@ function PageLayout({ page, children, onRefresh }) {
 
   return (
     <>
-      <header className="main__header scanline">
+      <header className="main__header">
         <div>
           <div className="main__title">{current.title}</div>
           <div className="main__subtitle">{current.subtitle}</div>
@@ -90,10 +91,10 @@ function PageLayout({ page, children, onRefresh }) {
         {page === '/' && (
           <div style={{ display: 'flex', gap: '8px' }}>
             <button className="btn btn--ghost" onClick={handleScrape} disabled={scraping}>
-              {scraping ? 'Scraping...' : 'Run Scrape'}
+              {scraping ? 'Scraping...' : 'Scrape'}
             </button>
             <button className="btn btn--primary" onClick={handleScore} disabled={scoring}>
-              {scoring ? 'Scoring...' : 'Score Posts'}
+              {scoring ? 'Scoring...' : 'Score'}
             </button>
           </div>
         )}
@@ -111,12 +112,11 @@ function PageLayout({ page, children, onRefresh }) {
   )
 }
 
-function PlaceholderPage({ name }) {
+function PlaceholderPage() {
   return (
     <div className="empty-state">
-      <div className="empty-state__icon">{{ Settings: '⚙' }[name]}</div>
-      <div className="empty-state__title">{name}</div>
-      <div className="empty-state__text">This page will be built in a later sprint.</div>
+      <div className="empty-state__title">Settings</div>
+      <div className="empty-state__text">Configuration options coming soon.</div>
     </div>
   )
 }
